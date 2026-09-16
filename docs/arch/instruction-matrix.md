@@ -68,10 +68,10 @@ Unconditional control flow instructions are the core building blocks for instrum
 - **Canonical:** [Arm Developer A64: BR](https://developer.arm.com/documentation/ddi0596/2021-12/Base-Instructions/BR--Branch-to-Register-)
 - **Format:**
   ```text
-   31          25 24 21 20   16 15 10 9     5 4   0
-  +--------------+-----+-------+-----+-------+-----+
-  |11010110000111|00000|000000 |00000|  Rn   |00000|
-  +--------------+-----+-------+-----+-------+-----+
+   31          25 24 21 20   16 15   10 9     5 4   0
+  +--------------+-----+-------+-------+-------+-----+
+  |   1101011    |0000 | 11111 |000000 |  Rn   |00000|
+  +--------------+-----+-------+-------+-------+-----+
   ```
 - **Mask / Match:** `(raw & 0xFFFF_FC1F) == 0xD61F_0000`
 - **Operands:** `Rn`: 5-bit general-purpose source register (0–30).
@@ -87,10 +87,10 @@ Unconditional control flow instructions are the core building blocks for instrum
 - **Canonical:** [Arm Developer A64: BLR](https://developer.arm.com/documentation/ddi0596/2021-12/Base-Instructions/BLR--Branch-with-Link-to-Register-)
 - **Format:**
   ```text
-   31          25 24 21 20   16 15 10 9     5 4   0
-  +--------------+-----+-------+-----+-------+-----+
-  |11010110001111|00000|000000 |00000|  Rn   |00000|
-  +--------------+-----+-------+-----+-------+-----+
+   31          25 24 21 20   16 15   10 9     5 4   0
+  +--------------+-----+-------+-------+-------+-----+
+  |   1101011    |0001 | 11111 |000000 |  Rn   |00000|
+  +--------------+-----+-------+-------+-------+-----+
   ```
 - **Mask / Match:** `(raw & 0xFFFF_FC1F) == 0xD63F_0000`
 - **Operands:** `Rn`: 5-bit register (0–30).
@@ -107,10 +107,10 @@ Unconditional control flow instructions are the core building blocks for instrum
 - **Canonical:** [Arm Developer A64: RET](https://developer.arm.com/documentation/ddi0596/2021-12/Base-Instructions/RET--Return-from-subroutine-)
 - **Format:**
   ```text
-   31          25 24 21 20   16 15 10 9     5 4   0
-  +--------------+-----+-------+-----+-------+-----+
-  |11010110010111|00000|000000 |00000|  Rn   |00000|
-  +--------------+-----+-------+-----+-------+-----+
+   31          25 24 21 20   16 15   10 9     5 4   0
+  +--------------+-----+-------+-------+-------+-----+
+  |   1101011    |0010 | 11111 |000000 |  Rn   |00000|
+  +--------------+-----+-------+-------+-------+-----+
   ```
 - **Mask / Match:** `(raw & 0xFFFF_FC1F) == 0xD65F_0000`
 - **Operands:** `Rn`: 5-bit register (defaults to `X30` if `Rn == 30`).
@@ -286,9 +286,9 @@ Basic ALU, register moves, and NOPs needed to execute rewritten prologues and ep
 - **Format:**
   ```text
    31 30 29 28 27 26 25 24 23 22 21 20         5 4    0
-  +--+-----+--+--+--+--+--+-----+--+------------+------+
-  |sf| opc |1 |0 |0 |1 |0 |  hw |     imm16    |  Rd  |
-  +--+-----+--+--+--+--+--+-----+--+------------+------+
+  +--+-----+--+--+--+--+--+--+-----+------------+------+
+  |sf| opc |1 |0 |0 |1 |0 |1 |  hw |   imm16    |  Rd  |
+  +--+-----+--+--+--+--+--+--+-----+------------+------+
   ```
 - **Mask / Match:** `(raw & 0x1F80_0000) == 0x1280_0000`
 - **Semantics:**
