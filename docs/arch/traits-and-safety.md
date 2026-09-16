@@ -53,7 +53,7 @@ This ensures that passing a test backend (such as a mock using `std::collections
 
 ## 2. Register Bank Interface: `RegisterBank`
 
-The `RegisterBank` trait encapsulates architectural state for AArch64 processing elements.
+The `RegisterBank` trait encapsulates architectural state for AArch64 processing elements using type-safe bounded register types (`Reg` and `VReg`). For detailed register type specifications and zero-extension semantics, see [Register Representation Specification](register-representation.md).
 
 ### 2.1 PSTATE NZCV Condition Flags
 
@@ -96,27 +96,50 @@ impl Nzcv {
 
 ```rust
 /// Abstract view of AArch64 architectural registers.
+///
+/// Integer register accesses accept `Reg` (guaranteed index 0..=31).
+/// Vector register accesses accept `VReg` (guaranteed index 0..=31).
 pub trait RegisterBank {
     /// Read a 64-bit general-purpose register (X0–X30).
     /// Accessing register 31 (XZR) must return 0.
-    fn read_x(&self, reg: u8) -> Result<u64, ExecError>;
+    fn read_x(&self, reg: Reg) -> u64;
 
     /// Write a 64-bit general-purpose register (X0–X30).
     /// Writing to register 31 (XZR) is a no-op and must discard the value.
-    fn write_x(&mut self, reg: u8, val: u64) -> Result<(), ExecError>;
+    fn write_x(&mut self, reg: Reg, val: u64);
 
     /// Read a 32-bit general-purpose register (W0–W30).
     /// Returns the lower 32 bits of the corresponding X register.
     /// Reading WZR (reg 31) returns 0.
-    fn read_w(&self, reg: u8) -> Result<u32, ExecError> {
-        self.read_x(reg).map(|v| v as u32)
+    fn read_w(&self, reg: Reg) -> u32 {
+        self.read_x(reg) as u32
     }
 
     /// Write a 32-bit general-purpose register (W0–W30).
     /// Per Arm specification, writing to a W register zero-extends to the entire 64-bit X register.
     /// Writing to WZR (reg 31) is a no-op.
-    fn write_w(&mut self, reg: u8, val: u32) -> Result<(), ExecError> {
-        self.write_x(reg, val as u64)
+    fn write_w(&mut self, reg: Reg, val: u32) {
+        self.write_x(reg, val as u64);
+    }
+
+    /// Read general-purpose register or Stack Pointer depending on instruction context.
+    /// If `reg.is_zr_or_sp()` is true, returns SP; otherwise returns X register value.
+    fn read_gpr_or_sp(&self, reg: Reg) -> u64 {
+        if reg.is_zr_or_sp() {
+            self.read_sp()
+        } else {
+            self.read_x(reg)
+        }
+    }
+
+    /// Write general-purpose register or Stack Pointer depending on instruction context.
+    /// If `reg.is_zr_or_sp()` is true, writes SP; otherwise writes X register value.
+    fn write_gpr_or_sp(&mut self, reg: Reg, val: u64) {
+        if reg.is_zr_or_sp() {
+            self.write_sp(val);
+        } else {
+            self.write_x(reg, val);
+        }
     }
 
     /// Read the current Stack Pointer (SP).
@@ -143,13 +166,13 @@ pub trait RegisterBank {
     fn set_flags(&mut self, flags: Nzcv);
 
     /// Read a 128-bit SIMD / Floating-Point register (V0–V31).
-    fn read_v(&self, reg: u8) -> Result<u128, ExecError> {
+    fn read_v(&self, reg: VReg) -> Result<u128, ExecError> {
         let _ = reg;
         Err(ExecError::SimdNotSupported)
     }
 
     /// Write a 128-bit SIMD / Floating-Point register (V0–V31).
-    fn write_v(&mut self, reg: u8, val: u128) -> Result<(), ExecError> {
+    fn write_v(&mut self, reg: VReg, val: u128) -> Result<(), ExecError> {
         let _ = (reg, val);
         Err(ExecError::SimdNotSupported)
     }

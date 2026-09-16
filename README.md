@@ -149,13 +149,14 @@ where
 ```text
 ├── .agents/
 │   └── rules/
-│       ├── signal-safety.md     # Mandatory rules for signal safety and reentrancy
-│       └── coding-style.md      # Idiomatic #![no_std] standards and Arm spec citations
+│       ├── signal-safety.md           # Mandatory rules for signal safety and reentrancy
+│       └── coding-style.md            # Idiomatic #![no_std] standards and Arm spec citations
 ├── docs/
 │   └── arch/
-│       ├── traits-and-safety.md # Interface specifications for RegisterBank & MemoryInterface
-│       └── instruction-matrix.md# Phased ISA implementation roadmap and opcode reference
-├── src/                         # Core engine (to be implemented)
+│       ├── traits-and-safety.md       # Interface specifications for RegisterBank & MemoryInterface
+│       ├── register-representation.md # Specification of register types, sizing, and semantics
+│       └── instruction-matrix.md      # Phased ISA implementation roadmap and opcode reference
+├── src/                               # Core engine (to be implemented)
 └── README.md
 ```
 
