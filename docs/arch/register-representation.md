@@ -128,6 +128,13 @@ Because the instruction decoder resolves encoding 31 into `CoreReg::Zr` or `Core
 2. The interpreter interacts with `CoreReg` uniformly using default trait methods on `RegisterBank`.
 3. Execution hot paths eliminate dynamic branching on opcode classes for register access.
 
+### Infallible Register Extraction Invariant
+Register operand extraction in the instruction decoder is architecturally infallible by construction:
+1. **5-Bit Masking:** Register fields in A64 instructions (`Rn`, `Rm`, `Rd`, `Rt`) are 5 bits wide. Masking with `0x1F` (`(raw >> shift) & 0x1F`) mathematically bounds the value to $0 \le \text{raw\_5bit} \le 31$.
+2. **Index 31 Resolution:** When $\text{raw\_5bit} = 31$, the constructor helper constructs `CoreReg::Zr` or `CoreReg::Sp` based on instruction context.
+3. **Index 0..=30 Resolution:** When $\text{raw\_5bit} \le 30$, the constructor helper constructs `CoreReg::Reg(Gpr)` safely via `Gpr::new_unchecked(idx)`.
+4. **Zero Error Branches:** Consequently, register field extraction in `Decoder::decode` is completely infallible, requiring zero error branches or `DecodeError` variants.
+
 ---
 
 ## 4. Width-Agnostic Design Rationale
