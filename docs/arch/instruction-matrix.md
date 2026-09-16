@@ -324,6 +324,10 @@ Basic ALU, register moves, and NOPs needed to execute rewritten prologues and ep
 
 Emulating load and store instructions commonly relocated during hook installation.
 
+> **Transactional Execution & Alignment Invariants:**
+> - **Atomic Commit & Faulting PC:** If address resolution, memory read/write, or alignment check faults during execution of any load/store instruction, no architectural state modifications (including base register writeback) are committed, and $PC$ remains strictly pointing to the faulting instruction per [Traits & Safety Specification Section 1.3](traits-and-safety.md#13-transactional-execution--faulting-pc-invariant).
+> - **Two-Tier Alignment:** Scalar `LDR`/`STR` instructions support unaligned access on Normal memory (passed to `MemoryInterface` per Tier 2), whereas pair `LDP`/`STP` instructions strictly require natural element alignment (4-byte for 32-bit, 8-byte for 64-bit) verified by the interpreter prior to memory access per Tier 1 of [Traits & Safety Specification Section 3.3](traits-and-safety.md#33-two-tier-memory-alignment-contract).
+
 ### 5.1 `LDR` / `STR` (Immediate Offset & Pre/Post-Indexed)
 - **Reference:** Arm ARM DDI 0487K.a, Section C6.2.149 / C6.2.304
 - **Size Encodings:**
@@ -335,9 +339,11 @@ Emulating load and store instructions commonly relocated during hook installatio
   - Unsigned offset: `[Rn, #offset]`
   - Pre-indexed: `[Rn, #offset]!` (updates $Rn = Rn + offset$)
   - Post-indexed: `[Rn], #offset` (updates $Rn = Rn + offset$ after access)
+- **Alignment & Transactional Semantics:** Scalar unaligned accesses are permitted on Normal memory per Tier 2 alignment contract. If memory access or base register calculation encounters a fault (e.g. `ExecError::MemoryFault`), no registers or memory are modified, and $PC$ retains the address of the faulting instruction.
 
 ### 5.2 `LDP` / `STP` (Load and Store Pair)
 - **Reference:** Arm ARM DDI 0487K.a, Section C6.2.146 / C6.2.301
 - **Canonical:** [Arm Developer A64: LDP](https://developer.arm.com/documentation/ddi0596/2021-12/Base-Instructions/LDP--Load-Pair-of-Registers-)
 - **Operands:** `Rt`, `Rt2`, `Rn`, signed 7-bit immediate offset.
 - **Semantics:** Reads or writes two consecutive words/doublewords from memory into `Rt` and `Rt2`, supporting pre-indexed, post-indexed, and signed offset modes.
+- **Alignment & Transactional Semantics:** Requires natural element alignment (4-byte alignment for 32-bit transfers, 8-byte alignment for 64-bit transfers) enforced by the Interpreter before memory access (Tier 1 alignment contract). On alignment violation (`ExecError::AlignmentFault`) or memory fault (`ExecError::MemoryFault`), execution halts atomically without modifying `Rt`, `Rt2`, `Rn`, or $PC$.

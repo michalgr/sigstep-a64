@@ -49,6 +49,17 @@ where
 
 This ensures that passing a test backend (such as a mock using `std::collections::HashMap` or `Vec<u8>`) to a signal handler is rejected at **compile time**.
 
+### 1.3 Transactional Execution & Faulting PC Invariant
+
+`Interpreter::step(&inst)` operates with strict **atomic commit semantics**:
+
+1. **All-or-Nothing State Commit:** An instruction's architectural state modifications—including general-purpose registers, Stack Pointer ($SP$), memory contents, condition flags ($NZCV$), and Program Counter ($PC$)—are committed to the register bank and memory interface if and only if the instruction completes execution successfully with `Ok(())`.
+2. **Faulting PC Preservation:** If any fault or error occurs during execution (e.g., `ExecError::MemoryFault`, `ExecError::AlignmentFault`, `ExecError::Breakpoint`, or `ExecError::Decode`), no partial state modifications are committed to architectural registers or memory. Crucially, $PC$ strictly retains the address of the faulting instruction rather than being advanced by +4.
+
+> **Arm Hardware Alignment:**
+> Reference: Arm Architecture Reference Manual (Arm ARM DDI 0487K.a), Section D1.10.1 "Exception return".
+> In AArch64 hardware, synchronous exceptions (data aborts, alignment faults, breakpoints) record the preferred exception return address—the address of the instruction that generated the fault—in `ELR_ELx`. Preserving $PC$ on failure ensures signal handlers, exception handlers, and debug monitors receive the exact architectural faulting state required for retry, diagnosis, or sigaltstack emulation.
+
 ---
 
 ## 2. Register Bank Interface: `RegisterBank`
@@ -307,6 +318,28 @@ pub trait MemoryInterface {
     }
 }
 ```
+
+### 3.3 Two-Tier Memory Alignment Contract
+
+Memory alignment enforcement is divided into two distinct architectural layers:
+
+#### Tier 1 — Interpreter (ISA-Mandated Alignment)
+
+The `Interpreter` validates ISA-mandated alignment invariants **before** invoking any `MemoryInterface` read or write methods:
+
+- **Load/Store Pair (`LDP` / `STP`):** The target address must be aligned to the element transfer size (4-byte alignment for 32-bit register transfers, 8-byte alignment for 64-bit register transfers). Reference: Arm ARM Section C6.2.146.
+- **Exclusive Accesses (`LDXR` / `STXR`):** The target address must be naturally aligned to the transfer size (2, 4, 8, or 16 bytes). Reference: Arm ARM Section C6.2.158.
+- **Atomic Operations (LSE):** Address must be naturally aligned to the datum size (e.g., 4-byte alignment for 32-bit atomics, 8-byte alignment for 64-bit atomics).
+- **Stack Pointer ($SP$ Alignment):** Whenever $SP$ is used as the base register for memory addressing, the effective address must be 16-byte aligned per architectural stack alignment rules. Reference: Arm ARM Section B1.2.1.
+
+Any Tier 1 violation immediately halts execution and returns `ExecError::AlignmentFault { address, required_alignment }` without calling `MemoryInterface`.
+
+#### Tier 2 — MemoryInterface (Address Space & Platform Alignment)
+
+The `MemoryInterface` backend handles page bounds, protection checks (`AccessKind`), and host/target memory model behavior:
+
+- **Scalar Load/Store (`LDR` / `STR`):** Scalar unaligned accesses on Normal memory are passed through to `MemoryInterface`, which may permit unaligned access if supported by the host environment / target memory model (e.g., aligned with hardware behavior controlled by `SCTLR_ELx.A`).
+- **Page Faults & Mapping:** Validates mapped pages and memory permissions, returning `ExecError::MemoryFault { address, kind }` when accessing unmapped or protected memory.
 
 ---
 
