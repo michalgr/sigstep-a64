@@ -39,7 +39,7 @@ flowchart TD
     end
 
     subgraph ExecPipeline["Parameterized Execution Engine"]
-        Inst --> Interp["Interpreter::step(&mut self)"]
+        Inst --> Interp["Interpreter::step(&mut self, &Instruction)"]
         Interp <--> Regs["R: RegisterBank"]
         Interp <--> Mem["M: MemoryInterface"]
     end
