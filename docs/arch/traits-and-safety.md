@@ -334,9 +334,6 @@ pub enum ExecError {
     /// Program Counter was set to an unaligned address (AArch64 requires 4-byte alignment).
     UnalignedPc(u64),
 
-    /// Attempted to read or write an illegal or out-of-range register identifier.
-    IllegalRegister(u8),
-
     /// Instruction decoding failed.
     Decode(DecodeError),
 
