@@ -42,6 +42,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Run Tests (default features)
         run: cargo test --all-targets
+      - name: Run Tests (all features)
+        run: cargo test --all-targets --all-features
       - name: Run Tests (no default features)
         run: cargo test --no-default-features
 
@@ -53,5 +55,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-unknown-none
-      - name: Check aarch64-unknown-none
+      - name: Check aarch64-unknown-none (pure core)
         run: cargo check --no-default-features --target aarch64-unknown-none
+      - name: Check aarch64-unknown-none (with alloc)
+        run: cargo check --no-default-features --features alloc --target aarch64-unknown-none
