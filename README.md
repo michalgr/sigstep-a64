@@ -153,6 +153,7 @@ where
 │       └── coding-style.md      # Idiomatic #![no_std] standards and Arm spec citations
 ├── docs/
 │   └── arch/
+│       ├── register-representation.md # Architectural register representation & disambiguation
 │       ├── traits-and-safety.md # Interface specifications for RegisterBank & MemoryInterface
 │       └── instruction-matrix.md# Phased ISA implementation roadmap and opcode reference
 ├── src/                         # Core engine (to be implemented)
