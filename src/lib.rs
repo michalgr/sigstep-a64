@@ -14,15 +14,9 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-// Placeholder module skeleton for core abstractions
-pub mod core {
-    //! Foundational traits, error taxonomies, and register representations.
-}
+pub mod core;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_crate_bootstrap() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+pub use crate::core::{
+    AccessKind, AsyncSignalSafe, CoreReg, DecodeError, ExecError, Gpr, MemoryInterface,
+    MemoryOrdering, Nzcv, RegisterBank, VReg,
+};
