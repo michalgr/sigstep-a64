@@ -230,11 +230,7 @@ mod tests {
     }
 
     #[test]
-    fn test_corereg_ord_and_hash() {
-        use std::collections::BTreeSet;
-        use std::collections::HashSet;
-        use std::vec::Vec;
-
+    fn test_corereg_ord() {
         let reg0 = CoreReg::Reg(Gpr::new(0).unwrap());
         let reg1 = CoreReg::Reg(Gpr::new(1).unwrap());
         let zr = CoreReg::Zr;
@@ -243,6 +239,18 @@ mod tests {
         assert!(reg0 < reg1);
         assert!(reg1 < zr);
         assert!(zr < sp);
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_corereg_hash_and_sets() {
+        use std::collections::BTreeSet;
+        use std::collections::HashSet;
+
+        let reg0 = CoreReg::Reg(Gpr::new(0).unwrap());
+        let reg1 = CoreReg::Reg(Gpr::new(1).unwrap());
+        let zr = CoreReg::Zr;
+        let sp = CoreReg::Sp;
 
         let mut set = HashSet::new();
         set.insert(reg0);
@@ -256,10 +264,11 @@ mod tests {
         btree.insert(reg1);
         btree.insert(reg0);
 
-        let vec: Vec<_> = btree.into_iter().collect();
+        let vec: std::vec::Vec<_> = btree.into_iter().collect();
         assert_eq!(vec, std::vec![reg0, reg1, zr, sp]);
     }
 
+    #[cfg(feature = "std")]
     #[test]
     fn test_nzcv_hash() {
         use std::collections::HashSet;

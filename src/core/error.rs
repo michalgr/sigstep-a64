@@ -243,12 +243,33 @@ mod tests {
 
     #[test]
     fn test_memory_ordering_display() {
-        use std::string::ToString;
-        assert_eq!(MemoryOrdering::Relaxed.to_string(), "Relaxed");
-        assert_eq!(MemoryOrdering::Acquire.to_string(), "Acquire");
-        assert_eq!(MemoryOrdering::Release.to_string(), "Release");
-        assert_eq!(MemoryOrdering::AcqRel.to_string(), "AcqRel");
-        assert_eq!(MemoryOrdering::SeqCst.to_string(), "SeqCst");
+        use core::fmt::Write;
+        struct Buffer([u8; 64], usize);
+        impl Write for Buffer {
+            fn write_str(&mut self, s: &str) -> core::fmt::Result {
+                let bytes = s.as_bytes();
+                let rem = self.0.len() - self.1;
+                let to_copy = bytes.len().min(rem);
+                self.0[self.1..self.1 + to_copy].copy_from_slice(&bytes[..to_copy]);
+                self.1 += to_copy;
+                Ok(())
+            }
+        }
+
+        let orderings = [
+            (MemoryOrdering::Relaxed, "Relaxed"),
+            (MemoryOrdering::Acquire, "Acquire"),
+            (MemoryOrdering::Release, "Release"),
+            (MemoryOrdering::AcqRel, "AcqRel"),
+            (MemoryOrdering::SeqCst, "SeqCst"),
+        ];
+
+        for (mo, expected) in orderings {
+            let mut buf = Buffer([0; 64], 0);
+            let _ = write!(buf, "{}", mo);
+            let s = core::str::from_utf8(&buf.0[..buf.1]).unwrap();
+            assert_eq!(s, expected);
+        }
     }
 
     #[test]
@@ -266,6 +287,7 @@ mod tests {
         assert_eq!(err, ExecError::Decode(DecodeError::Undefined(0x12345678)));
     }
 
+    #[cfg(feature = "std")]
     #[test]
     fn test_error_hash_and_sets() {
         use std::collections::HashSet;
