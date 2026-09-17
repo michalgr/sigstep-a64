@@ -56,8 +56,9 @@ pub trait RegisterBank {
     fn set_pc(&mut self, val: u64);
 
     /// Advance the Program Counter by standard instruction offset (defaults to +offset).
+    #[inline]
     fn advance_pc(&mut self, offset: i64) {
-        self.set_pc((self.get_pc() as i64 + offset) as u64);
+        self.set_pc(self.get_pc().wrapping_add(offset as u64));
     }
 
     /// Read the NZCV condition flags.
@@ -303,5 +304,14 @@ mod tests {
         assert_eq!(regs.get_pc(), 0x1004);
         regs.advance_pc(-8);
         assert_eq!(regs.get_pc(), 0x0FFC);
+
+        // Boundary cases for high bits / signed overflow protection
+        regs.set_pc(0x8000_0000_0000_0000);
+        regs.advance_pc(-4);
+        assert_eq!(regs.get_pc(), 0x7FFF_FFFF_FFFF_FFFC);
+
+        regs.set_pc(0xFFFF_FFFF_FFFF_FFFC);
+        regs.advance_pc(4);
+        assert_eq!(regs.get_pc(), 0x0000_0000_0000_0000);
     }
 }
