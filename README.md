@@ -8,6 +8,16 @@
 
 ---
 
+> [!WARNING]
+> **Early Development / Pre-Alpha Notice**
+>
+> `sigstep-a64` is currently in active early development and is **not ready for production or general usage**.
+> - Implementation of the core AArch64 instruction set is ongoing (see [Instruction Support Matrix & Phased Roadmap](docs/arch/instruction-matrix.md)).
+> - Architectural interfaces and public APIs are actively evolving and subject to breaking changes without prior notice.
+> - Do not integrate this library into production systems or downstream projects at this stage.
+
+---
+
 ## Overview
 
 `sigstep-a64` provides an embeddable, high-assurance ARM64 (AArch64) instruction decoder and execution engine. It is designed specifically for runtime systems, user-space trap-and-emulate monitors, software breakpoints, and low-level debugging frameworks that execute inside **POSIX signal handlers** (such as `SIGILL`, `SIGTRAP`, and `SIGSEGV`) where standard runtime routines, dynamic memory allocation, and mutex synchronization are illegal.
@@ -91,6 +101,9 @@ The crate is organized into minimal layers to maximize portability and verifiabi
 | `std` | **Yes** | Enables standard library integration, formatting helpers, and standard test runners. |
 | `alloc` | No | Enables heap-backed memory models, rich instruction tracing, and AST-like disassembler views. |
 | `signal` | No | Exposes Linux / POSIX `ucontext_t` register view and direct safe-probing memory backend via `libc` (`default-features = false`). |
+
+> [!NOTE]
+> The crate is not yet published or stable. Dependency declarations below are illustrative and subject to change.
 
 To use `sigstep-a64` in bare-metal environments or `#![no_std]` runtimes:
 
