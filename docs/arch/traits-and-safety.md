@@ -257,6 +257,17 @@ pub trait MemoryInterface {
         Err(ExecError::AtomicNotSupported)
     }
 
+    /// Atomic Swap / Exchange (32-bit).
+    fn atomic_swap_u32(
+        &mut self,
+        addr: u64,
+        val: u32,
+        order: MemoryOrdering,
+    ) -> Result<u32, ExecError> {
+        let _ = (addr, val, order);
+        Err(ExecError::AtomicNotSupported)
+    }
+
     /// Atomic Swap / Exchange (64-bit).
     fn atomic_swap_u64(
         &mut self,
@@ -264,6 +275,17 @@ pub trait MemoryInterface {
         val: u64,
         order: MemoryOrdering,
     ) -> Result<u64, ExecError> {
+        let _ = (addr, val, order);
+        Err(ExecError::AtomicNotSupported)
+    }
+
+    /// Atomic Fetch-and-Add (32-bit).
+    fn atomic_fetch_add_u32(
+        &mut self,
+        addr: u64,
+        val: u32,
+        order: MemoryOrdering,
+    ) -> Result<u32, ExecError> {
         let _ = (addr, val, order);
         Err(ExecError::AtomicNotSupported)
     }

@@ -141,6 +141,18 @@ pub trait MemoryInterface {
         Err(ExecError::AtomicNotSupported)
     }
 
+    /// Atomic Swap / Exchange (32-bit).
+    #[inline]
+    fn atomic_swap_u32(
+        &mut self,
+        addr: u64,
+        val: u32,
+        order: MemoryOrdering,
+    ) -> Result<u32, ExecError> {
+        let _ = (addr, val, order);
+        Err(ExecError::AtomicNotSupported)
+    }
+
     /// Atomic Swap / Exchange (64-bit).
     fn atomic_swap_u64(
         &mut self,
@@ -148,6 +160,18 @@ pub trait MemoryInterface {
         val: u64,
         order: MemoryOrdering,
     ) -> Result<u64, ExecError> {
+        let _ = (addr, val, order);
+        Err(ExecError::AtomicNotSupported)
+    }
+
+    /// Atomic Fetch-and-Add (32-bit).
+    #[inline]
+    fn atomic_fetch_add_u32(
+        &mut self,
+        addr: u64,
+        val: u32,
+        order: MemoryOrdering,
+    ) -> Result<u32, ExecError> {
         let _ = (addr, val, order);
         Err(ExecError::AtomicNotSupported)
     }
@@ -303,5 +327,72 @@ mod tests {
         assert_eq!(regs.get_pc(), 0x1004);
         regs.advance_pc(-8);
         assert_eq!(regs.get_pc(), 0x0FFC);
+    }
+
+    struct MockMemory;
+
+    impl MemoryInterface for MockMemory {
+        fn read_u8(&mut self, addr: u64) -> Result<u8, ExecError> {
+            let _ = addr;
+            Err(ExecError::AtomicNotSupported)
+        }
+
+        fn read_u16(&mut self, addr: u64) -> Result<u16, ExecError> {
+            let _ = addr;
+            Err(ExecError::AtomicNotSupported)
+        }
+
+        fn read_u32(&mut self, addr: u64) -> Result<u32, ExecError> {
+            let _ = addr;
+            Err(ExecError::AtomicNotSupported)
+        }
+
+        fn read_u64(&mut self, addr: u64) -> Result<u64, ExecError> {
+            let _ = addr;
+            Err(ExecError::AtomicNotSupported)
+        }
+
+        fn read_u128(&mut self, addr: u64) -> Result<u128, ExecError> {
+            let _ = addr;
+            Err(ExecError::AtomicNotSupported)
+        }
+
+        fn write_u8(&mut self, addr: u64, val: u8) -> Result<(), ExecError> {
+            let _ = (addr, val);
+            Err(ExecError::AtomicNotSupported)
+        }
+
+        fn write_u16(&mut self, addr: u64, val: u16) -> Result<(), ExecError> {
+            let _ = (addr, val);
+            Err(ExecError::AtomicNotSupported)
+        }
+
+        fn write_u32(&mut self, addr: u64, val: u32) -> Result<(), ExecError> {
+            let _ = (addr, val);
+            Err(ExecError::AtomicNotSupported)
+        }
+
+        fn write_u64(&mut self, addr: u64, val: u64) -> Result<(), ExecError> {
+            let _ = (addr, val);
+            Err(ExecError::AtomicNotSupported)
+        }
+
+        fn write_u128(&mut self, addr: u64, val: u128) -> Result<(), ExecError> {
+            let _ = (addr, val);
+            Err(ExecError::AtomicNotSupported)
+        }
+    }
+
+    #[test]
+    fn test_default_memory_interface_atomic_methods() {
+        let mut mem = MockMemory;
+        assert_eq!(
+            mem.atomic_swap_u32(0x1000, 42, MemoryOrdering::Relaxed),
+            Err(ExecError::AtomicNotSupported)
+        );
+        assert_eq!(
+            mem.atomic_fetch_add_u32(0x1000, 10, MemoryOrdering::SeqCst),
+            Err(ExecError::AtomicNotSupported)
+        );
     }
 }
