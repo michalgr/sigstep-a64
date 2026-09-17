@@ -45,7 +45,7 @@ impl Gpr {
 ///
 /// Reference: Arm Architecture Procedure Call Standard for AArch64 (AAPCS64), Section 6.1.1
 /// Canonical: https://github.com/ARM-software/abi-aa/blob/main/aapcs64/aapcs64.rst
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum CoreReg {
     /// Architectural general-purpose register X0..X30 (or W0..W30).
     Reg(Gpr),
@@ -117,7 +117,7 @@ impl VReg {
 /// Condition flags from PSTATE (NZCV bits 31:28).
 ///
 /// Reference: Arm Architecture Reference Manual (Arm ARM DDI 0487K.a), Section C5.2.10
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Nzcv {
     /// Negative condition flag (Bit 31)
     pub n: bool,
@@ -227,5 +227,60 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn test_corereg_ord() {
+        let reg0 = CoreReg::Reg(Gpr::new(0).unwrap());
+        let reg1 = CoreReg::Reg(Gpr::new(1).unwrap());
+        let zr = CoreReg::Zr;
+        let sp = CoreReg::Sp;
+
+        assert!(reg0 < reg1);
+        assert!(reg1 < zr);
+        assert!(zr < sp);
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_corereg_hash_and_sets() {
+        use std::collections::BTreeSet;
+        use std::collections::HashSet;
+
+        let reg0 = CoreReg::Reg(Gpr::new(0).unwrap());
+        let reg1 = CoreReg::Reg(Gpr::new(1).unwrap());
+        let zr = CoreReg::Zr;
+        let sp = CoreReg::Sp;
+
+        let mut set = HashSet::new();
+        set.insert(reg0);
+        set.insert(zr);
+        set.insert(sp);
+        assert!(set.contains(&reg0));
+
+        let mut btree = BTreeSet::new();
+        btree.insert(sp);
+        btree.insert(zr);
+        btree.insert(reg1);
+        btree.insert(reg0);
+
+        let vec: std::vec::Vec<_> = btree.into_iter().collect();
+        assert_eq!(vec, std::vec![reg0, reg1, zr, sp]);
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_nzcv_hash() {
+        use std::collections::HashSet;
+
+        let mut set = HashSet::new();
+        let flags = Nzcv {
+            n: true,
+            z: false,
+            c: true,
+            v: false,
+        };
+        set.insert(flags);
+        assert!(set.contains(&flags));
     }
 }

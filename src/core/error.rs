@@ -6,7 +6,7 @@
 use core::fmt;
 
 /// Memory access permissions and classification.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum AccessKind {
     /// Read access.
     Read,
@@ -27,7 +27,7 @@ impl fmt::Display for AccessKind {
 }
 
 /// Standard atomic memory ordering semantics (aligned with C11 / Rust `core::sync::atomic`).
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum MemoryOrdering {
     /// Relaxed ordering.
     Relaxed,
@@ -41,8 +41,20 @@ pub enum MemoryOrdering {
     SeqCst,
 }
 
+impl fmt::Display for MemoryOrdering {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            MemoryOrdering::Relaxed => write!(f, "Relaxed"),
+            MemoryOrdering::Acquire => write!(f, "Acquire"),
+            MemoryOrdering::Release => write!(f, "Release"),
+            MemoryOrdering::AcqRel => write!(f, "AcqRel"),
+            MemoryOrdering::SeqCst => write!(f, "SeqCst"),
+        }
+    }
+}
+
 /// Errors occurring during instruction decoding.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum DecodeError {
     /// Raw 32-bit opcode does not match any valid AArch64 instruction encoding.
     Undefined(u32),
@@ -73,7 +85,7 @@ impl fmt::Display for DecodeError {
 impl std::error::Error for DecodeError {}
 
 /// Errors occurring during instruction execution.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum ExecError {
     /// Failed memory access due to unmapped memory, page fault, or protection violation.
     MemoryFault {
@@ -112,6 +124,13 @@ pub enum ExecError {
     SimdNotSupported,
     /// Internal logical invariant violated (replaces panics).
     InternalInvariantViolated,
+}
+
+impl From<DecodeError> for ExecError {
+    #[inline]
+    fn from(err: DecodeError) -> Self {
+        ExecError::Decode(err)
+    }
 }
 
 impl fmt::Display for ExecError {
@@ -220,5 +239,74 @@ mod tests {
             required_alignment: 8,
         };
         assert!(std::format!("{}", align_err).contains("8 bytes"));
+    }
+
+    #[test]
+    fn test_memory_ordering_display() {
+        use core::fmt::Write;
+        struct Buffer([u8; 64], usize);
+        impl Write for Buffer {
+            fn write_str(&mut self, s: &str) -> core::fmt::Result {
+                let bytes = s.as_bytes();
+                let rem = self.0.len() - self.1;
+                let to_copy = bytes.len().min(rem);
+                self.0[self.1..self.1 + to_copy].copy_from_slice(&bytes[..to_copy]);
+                self.1 += to_copy;
+                Ok(())
+            }
+        }
+
+        let orderings = [
+            (MemoryOrdering::Relaxed, "Relaxed"),
+            (MemoryOrdering::Acquire, "Acquire"),
+            (MemoryOrdering::Release, "Release"),
+            (MemoryOrdering::AcqRel, "AcqRel"),
+            (MemoryOrdering::SeqCst, "SeqCst"),
+        ];
+
+        for (mo, expected) in orderings {
+            let mut buf = Buffer([0; 64], 0);
+            let _ = write!(buf, "{}", mo);
+            let s = core::str::from_utf8(&buf.0[..buf.1]).unwrap();
+            assert_eq!(s, expected);
+        }
+    }
+
+    #[test]
+    fn test_decode_error_try_propagation() {
+        fn decode_op(op: u32) -> Result<(), DecodeError> {
+            Err(DecodeError::Undefined(op))
+        }
+
+        fn execute_op(op: u32) -> Result<(), ExecError> {
+            decode_op(op)?;
+            Ok(())
+        }
+
+        let err = execute_op(0x12345678).unwrap_err();
+        assert_eq!(err, ExecError::Decode(DecodeError::Undefined(0x12345678)));
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_error_hash_and_sets() {
+        use std::collections::HashSet;
+
+        let mut set = HashSet::new();
+        set.insert(AccessKind::Read);
+        set.insert(AccessKind::Write);
+        assert!(set.contains(&AccessKind::Read));
+
+        let mut mo_set = HashSet::new();
+        mo_set.insert(MemoryOrdering::Acquire);
+        assert!(mo_set.contains(&MemoryOrdering::Acquire));
+
+        let mut decode_set = HashSet::new();
+        decode_set.insert(DecodeError::Undefined(0));
+        assert!(decode_set.contains(&DecodeError::Undefined(0)));
+
+        let mut exec_set = HashSet::new();
+        exec_set.insert(ExecError::AtomicNotSupported);
+        assert!(exec_set.contains(&ExecError::AtomicNotSupported));
     }
 }
