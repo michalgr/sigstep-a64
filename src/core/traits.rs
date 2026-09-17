@@ -2,7 +2,7 @@
 //!
 //! Defines `RegisterBank`, `MemoryInterface`, and `AsyncSignalSafe` traits.
 
-use crate::core::error::{ExecError, MemoryOrdering};
+use crate::core::error::{AccessKind, DecodeError, ExecError, MemoryOrdering};
 use crate::core::reg::{CoreReg, Gpr, Nzcv, VReg};
 
 /// Abstract view of AArch64 architectural registers.
@@ -228,6 +228,18 @@ pub trait MemoryInterface {
 /// 5. **Deterministic Termination:** All operations complete in bounded O(1) time.
 pub unsafe trait AsyncSignalSafe {}
 
+unsafe impl<T: AsyncSignalSafe + ?Sized> AsyncSignalSafe for &T {}
+unsafe impl<T: AsyncSignalSafe + ?Sized> AsyncSignalSafe for &mut T {}
+
+unsafe impl AsyncSignalSafe for Gpr {}
+unsafe impl AsyncSignalSafe for VReg {}
+unsafe impl AsyncSignalSafe for CoreReg {}
+unsafe impl AsyncSignalSafe for Nzcv {}
+unsafe impl AsyncSignalSafe for AccessKind {}
+unsafe impl AsyncSignalSafe for MemoryOrdering {}
+unsafe impl AsyncSignalSafe for DecodeError {}
+unsafe impl AsyncSignalSafe for ExecError {}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -439,5 +451,22 @@ mod tests {
             mem.atomic_fetch_add_u64(0x1000, 10, MemoryOrdering::SeqCst),
             Err(ExecError::AtomicNotSupported)
         );
+    }
+
+    fn assert_async_signal_safe<T: AsyncSignalSafe>() {}
+
+    #[test]
+    fn test_async_signal_safe_implementations() {
+        assert_async_signal_safe::<Gpr>();
+        assert_async_signal_safe::<VReg>();
+        assert_async_signal_safe::<CoreReg>();
+        assert_async_signal_safe::<Nzcv>();
+        assert_async_signal_safe::<AccessKind>();
+        assert_async_signal_safe::<MemoryOrdering>();
+        assert_async_signal_safe::<DecodeError>();
+        assert_async_signal_safe::<ExecError>();
+
+        assert_async_signal_safe::<&Gpr>();
+        assert_async_signal_safe::<&mut Gpr>();
     }
 }

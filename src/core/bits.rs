@@ -21,10 +21,13 @@ pub const fn extract_bits(val: u32, lsb: u32, width: u32) -> u32 {
 
 /// Sign-extends a `bit_width`-bit signed integer value contained in `val` to a 64-bit unsigned integer representation.
 ///
-/// Returns `val` as-is if `bit_width == 0` or `bit_width >= 64`.
+/// Returns `0` if `bit_width == 0`, or `val` as-is if `bit_width >= 64`.
 #[inline]
 pub const fn sign_extend(val: u64, bit_width: u32) -> u64 {
-    if bit_width == 0 || bit_width >= 64 {
+    if bit_width == 0 {
+        return 0;
+    }
+    if bit_width >= 64 {
         return val;
     }
     let shift = 64 - bit_width;
@@ -60,6 +63,6 @@ mod tests {
         let val_64 = 0x8000_0000_0000_0000;
         assert_eq!(sign_extend(val_64, 64), val_64);
 
-        assert_eq!(sign_extend(0b111, 0), 0b111);
+        assert_eq!(sign_extend(0b111, 0), 0);
     }
 }
