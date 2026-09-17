@@ -17,6 +17,6 @@ extern crate std;
 pub mod core;
 
 pub use crate::core::{
-    AccessKind, AsyncSignalSafe, CoreReg, DecodeError, ExecError, Gpr, MemoryInterface,
-    MemoryOrdering, Nzcv, RegisterBank, VReg,
+    extract_bits, sign_extend, AccessKind, AsyncSignalSafe, CoreReg, DecodeError, ExecError, Gpr,
+    MemoryInterface, MemoryOrdering, Nzcv, RegisterBank, VReg,
 };

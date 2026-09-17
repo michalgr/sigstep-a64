@@ -88,6 +88,14 @@ impl CoreReg {
 pub struct VReg(u8);
 
 impl VReg {
+    /// Resolves a 5-bit vector register field (0..=31).
+    #[inline]
+    pub const fn from_raw(raw_5bit: u32) -> Self {
+        let idx = (raw_5bit & 0x1F) as u8;
+        // SAFETY: idx is bounded to 0..=31 by 0x1F mask.
+        unsafe { Self::new_unchecked(idx) }
+    }
+
     /// Creates a new `VReg` if `idx` is in the valid range `0..=31`.
     #[inline]
     pub const fn new(idx: u8) -> Option<Self> {
@@ -175,6 +183,9 @@ mod tests {
             assert_eq!(vreg.index(), i);
             let vreg_unchecked = unsafe { VReg::new_unchecked(i) };
             assert_eq!(vreg_unchecked.index(), i);
+            assert_eq!(VReg::from_raw(i as u32).index(), i);
+            assert_eq!(VReg::from_raw(i as u32 + 32).index(), i);
+            assert_eq!(VReg::from_raw(i as u32 + 64).index(), i);
         }
         for i in 32..=255 {
             assert_eq!(VReg::new(i), None);
