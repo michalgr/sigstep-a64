@@ -22,6 +22,7 @@ pub trait RegisterBank {
     fn write_sp(&mut self, val: u64);
 
     /// Read 64-bit value from decoded `CoreReg` operand.
+    #[inline]
     fn read_core_x(&self, reg: CoreReg) -> u64 {
         match reg {
             CoreReg::Reg(r) => self.read_x(r),
@@ -31,11 +32,13 @@ pub trait RegisterBank {
     }
 
     /// Read 32-bit value from decoded `CoreReg` operand.
+    #[inline]
     fn read_core_w(&self, reg: CoreReg) -> u32 {
         self.read_core_x(reg) as u32
     }
 
     /// Write 64-bit value to decoded `CoreReg` operand.
+    #[inline]
     fn write_core_x(&mut self, reg: CoreReg, val: u64) {
         match reg {
             CoreReg::Reg(r) => self.write_x(r, val),
@@ -45,6 +48,7 @@ pub trait RegisterBank {
     }
 
     /// Write 32-bit value to decoded `CoreReg` operand (zero-extending per Arm ARM B1.2.1).
+    #[inline]
     fn write_core_w(&mut self, reg: CoreReg, val: u32) {
         self.write_core_x(reg, val as u64);
     }
@@ -56,6 +60,7 @@ pub trait RegisterBank {
     fn set_pc(&mut self, val: u64);
 
     /// Advance the Program Counter by standard instruction offset (defaults to +offset).
+    #[inline]
     fn advance_pc(&mut self, offset: i64) {
         self.set_pc((self.get_pc() as i64 + offset) as u64);
     }
@@ -67,12 +72,14 @@ pub trait RegisterBank {
     fn set_flags(&mut self, flags: Nzcv);
 
     /// Read a 128-bit SIMD / Floating-Point register (V0–V31).
+    #[inline]
     fn read_v(&self, reg: VReg) -> Result<u128, ExecError> {
         let _ = reg;
         Err(ExecError::SimdNotSupported)
     }
 
     /// Write a 128-bit SIMD / Floating-Point register (V0–V31).
+    #[inline]
     fn write_v(&mut self, reg: VReg, val: u128) -> Result<(), ExecError> {
         let _ = (reg, val);
         Err(ExecError::SimdNotSupported)
@@ -118,6 +125,7 @@ pub trait MemoryInterface {
     // --- Atomic Operations (LSE Atomics - Armv8.1-A) ---
 
     /// Atomic Compare-and-Swap (32-bit).
+    #[inline]
     fn atomic_cas_u32(
         &mut self,
         addr: u64,
@@ -130,6 +138,7 @@ pub trait MemoryInterface {
     }
 
     /// Atomic Compare-and-Swap (64-bit).
+    #[inline]
     fn atomic_cas_u64(
         &mut self,
         addr: u64,
@@ -142,6 +151,7 @@ pub trait MemoryInterface {
     }
 
     /// Atomic Swap / Exchange (64-bit).
+    #[inline]
     fn atomic_swap_u64(
         &mut self,
         addr: u64,
@@ -153,6 +163,7 @@ pub trait MemoryInterface {
     }
 
     /// Atomic Fetch-and-Add (64-bit).
+    #[inline]
     fn atomic_fetch_add_u64(
         &mut self,
         addr: u64,
@@ -166,24 +177,28 @@ pub trait MemoryInterface {
     // --- Exclusive Monitor Interface (LL / SC - LDXR / STXR) ---
 
     /// Tag an address in the local exclusive monitor (e.g., on LDXR).
+    #[inline]
     fn mark_exclusive(&mut self, addr: u64, size: usize) -> Result<(), ExecError> {
         let _ = (addr, size);
         Ok(())
     }
 
     /// Attempt to store conditionally to an address (32-bit, e.g., on STXR).
+    #[inline]
     fn try_store_exclusive_u32(&mut self, addr: u64, val: u32) -> Result<bool, ExecError> {
         let _ = (addr, val);
         Err(ExecError::ExclusiveMonitorNotSupported)
     }
 
     /// Attempt to store conditionally to an address (64-bit, e.g., on STXR).
+    #[inline]
     fn try_store_exclusive_u64(&mut self, addr: u64, val: u64) -> Result<bool, ExecError> {
         let _ = (addr, val);
         Err(ExecError::ExclusiveMonitorNotSupported)
     }
 
     /// Explicitly clear the local exclusive monitor (e.g., on CLREX).
+    #[inline]
     fn clear_exclusive(&mut self) {
         // Default no-op
     }
