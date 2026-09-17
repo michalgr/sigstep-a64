@@ -142,6 +142,17 @@ pub trait MemoryInterface {
         Err(ExecError::AtomicNotSupported)
     }
 
+    /// Atomic Swap / Exchange (32-bit).
+    fn atomic_swap_u32(
+        &mut self,
+        addr: u64,
+        val: u32,
+        order: MemoryOrdering,
+    ) -> Result<u32, ExecError> {
+        let _ = (addr, val, order);
+        Err(ExecError::AtomicNotSupported)
+    }
+
     /// Atomic Swap / Exchange (64-bit).
     fn atomic_swap_u64(
         &mut self,
@@ -149,6 +160,17 @@ pub trait MemoryInterface {
         val: u64,
         order: MemoryOrdering,
     ) -> Result<u64, ExecError> {
+        let _ = (addr, val, order);
+        Err(ExecError::AtomicNotSupported)
+    }
+
+    /// Atomic Fetch-and-Add (32-bit).
+    fn atomic_fetch_add_u32(
+        &mut self,
+        addr: u64,
+        val: u32,
+        order: MemoryOrdering,
+    ) -> Result<u32, ExecError> {
         let _ = (addr, val, order);
         Err(ExecError::AtomicNotSupported)
     }
@@ -313,5 +335,109 @@ mod tests {
         regs.set_pc(0xFFFF_FFFF_FFFF_FFFC);
         regs.advance_pc(4);
         assert_eq!(regs.get_pc(), 0x0000_0000_0000_0000);
+    }
+
+    struct MockMem;
+
+    impl MemoryInterface for MockMem {
+        fn read_u8(&mut self, _addr: u64) -> Result<u8, ExecError> {
+            Err(ExecError::MemoryFault {
+                address: 0,
+                kind: crate::core::error::AccessKind::Read,
+            })
+        }
+
+        fn read_u16(&mut self, _addr: u64) -> Result<u16, ExecError> {
+            Err(ExecError::MemoryFault {
+                address: 0,
+                kind: crate::core::error::AccessKind::Read,
+            })
+        }
+
+        fn read_u32(&mut self, _addr: u64) -> Result<u32, ExecError> {
+            Err(ExecError::MemoryFault {
+                address: 0,
+                kind: crate::core::error::AccessKind::Read,
+            })
+        }
+
+        fn read_u64(&mut self, _addr: u64) -> Result<u64, ExecError> {
+            Err(ExecError::MemoryFault {
+                address: 0,
+                kind: crate::core::error::AccessKind::Read,
+            })
+        }
+
+        fn read_u128(&mut self, _addr: u64) -> Result<u128, ExecError> {
+            Err(ExecError::MemoryFault {
+                address: 0,
+                kind: crate::core::error::AccessKind::Read,
+            })
+        }
+
+        fn write_u8(&mut self, _addr: u64, _val: u8) -> Result<(), ExecError> {
+            Err(ExecError::MemoryFault {
+                address: 0,
+                kind: crate::core::error::AccessKind::Write,
+            })
+        }
+
+        fn write_u16(&mut self, _addr: u64, _val: u16) -> Result<(), ExecError> {
+            Err(ExecError::MemoryFault {
+                address: 0,
+                kind: crate::core::error::AccessKind::Write,
+            })
+        }
+
+        fn write_u32(&mut self, _addr: u64, _val: u32) -> Result<(), ExecError> {
+            Err(ExecError::MemoryFault {
+                address: 0,
+                kind: crate::core::error::AccessKind::Write,
+            })
+        }
+
+        fn write_u64(&mut self, _addr: u64, _val: u64) -> Result<(), ExecError> {
+            Err(ExecError::MemoryFault {
+                address: 0,
+                kind: crate::core::error::AccessKind::Write,
+            })
+        }
+
+        fn write_u128(&mut self, _addr: u64, _val: u128) -> Result<(), ExecError> {
+            Err(ExecError::MemoryFault {
+                address: 0,
+                kind: crate::core::error::AccessKind::Write,
+            })
+        }
+    }
+
+    #[test]
+    fn test_default_atomic_methods_unsupported() {
+        let mut mem = MockMem;
+
+        assert_eq!(
+            mem.atomic_cas_u32(0x1000, 0, 1, MemoryOrdering::SeqCst),
+            Err(ExecError::AtomicNotSupported)
+        );
+        assert_eq!(
+            mem.atomic_cas_u64(0x1000, 0, 1, MemoryOrdering::SeqCst),
+            Err(ExecError::AtomicNotSupported)
+        );
+        assert_eq!(
+            mem.atomic_swap_u32(0x1000, 42, MemoryOrdering::SeqCst),
+            Err(ExecError::AtomicNotSupported)
+        );
+        assert_eq!(
+            mem.atomic_swap_u64(0x1000, 42, MemoryOrdering::SeqCst),
+            Err(ExecError::AtomicNotSupported)
+        );
+        assert_eq!(
+            mem.atomic_fetch_add_u32(0x1000, 10, MemoryOrdering::SeqCst),
+            Err(ExecError::AtomicNotSupported)
+        );
+        assert_eq!(
+            mem.atomic_fetch_add_u64(0x1000, 10, MemoryOrdering::SeqCst),
+            Err(ExecError::AtomicNotSupported)
+        );
     }
 }
