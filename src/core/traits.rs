@@ -22,6 +22,7 @@ pub trait RegisterBank {
     fn write_sp(&mut self, val: u64);
 
     /// Read 64-bit value from decoded `CoreReg` operand.
+    #[inline]
     fn read_core_x(&self, reg: CoreReg) -> u64 {
         match reg {
             CoreReg::Reg(r) => self.read_x(r),
@@ -31,11 +32,13 @@ pub trait RegisterBank {
     }
 
     /// Read 32-bit value from decoded `CoreReg` operand.
+    #[inline]
     fn read_core_w(&self, reg: CoreReg) -> u32 {
         self.read_core_x(reg) as u32
     }
 
     /// Write 64-bit value to decoded `CoreReg` operand.
+    #[inline]
     fn write_core_x(&mut self, reg: CoreReg, val: u64) {
         match reg {
             CoreReg::Reg(r) => self.write_x(r, val),
@@ -45,6 +48,7 @@ pub trait RegisterBank {
     }
 
     /// Write 32-bit value to decoded `CoreReg` operand (zero-extending per Arm ARM B1.2.1).
+    #[inline]
     fn write_core_w(&mut self, reg: CoreReg, val: u32) {
         self.write_core_x(reg, val as u64);
     }
@@ -207,6 +211,7 @@ pub trait MemoryInterface {
     }
 
     /// Explicitly clear the local exclusive monitor (e.g., on CLREX).
+    #[inline]
     fn clear_exclusive(&mut self) {
         // Default no-op
     }
