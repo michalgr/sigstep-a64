@@ -15,8 +15,14 @@ extern crate alloc;
 extern crate std;
 
 pub mod core;
+pub mod decode;
+pub mod exec;
+pub mod test_utils;
 
 pub use crate::core::{
     extract_bits, sign_extend, AccessKind, AsyncSignalSafe, CoreReg, DecodeError, ExecError, Gpr,
     MemoryInterface, MemoryOrdering, Nzcv, RegisterBank, VReg,
 };
+pub use crate::decode::{Decoder, Instruction};
+pub use crate::exec::Interpreter;
+pub use crate::test_utils::{NoopMem, VirtualRegs};
